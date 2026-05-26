@@ -192,7 +192,17 @@ def data_preprocessing(df):
     y_val = y_val.values.ravel()
     y_test = y_test.values.ravel()
 
-    return X_train, X_val, X_test, y_train, y_val, y_test
+    preprocessors = {
+        'ohe': encoder,
+        'ohe_cols': ohe_cols,
+        'target_encoder': target_encoder,
+        'te_cols': te_cols,
+        'scaler': scaler,
+        'feature_names': features,
+        'min_year': int(modelling_df['transaction_year'].min()),
+    }
+
+    return X_train, X_val, X_test, y_train, y_val, y_test, preprocessors
 
 
 def model_development(X_train, y_train):
@@ -238,20 +248,18 @@ def evaluate_model(model, X_train, X_val, X_test, y_train, y_val, y_test):
         print(f"  MAPE: {mape:.4f}")
 
 
-def save_best_model_with_best_hyperparameter(model, params, save_dir='model'):
+def save_best_model_with_best_hyperparameter(model, params, preprocessors, save_dir='model'):
     save_dir = Path(save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
-    model_path = save_dir / f'rf_model_{timestamp}.joblib'
-    joblib.dump(model, model_path)
-    print(f"\nModel saved to: {model_path}")
-
-    params_path = save_dir / f'rf_params_{timestamp}.joblib'
-    joblib.dump(params, params_path)
-    print(f"Hyperparameters saved to: {params_path}")
+    joblib.dump(model, save_dir / f'rf_model_{timestamp}.joblib')
+    joblib.dump(params, save_dir / f'rf_params_{timestamp}.joblib')
+    joblib.dump(preprocessors, save_dir / f'preprocessors_{timestamp}.joblib')
 
     joblib.dump(model, save_dir / 'rf_model_latest.joblib')
     joblib.dump(params, save_dir / 'rf_params_latest.joblib')
-    print(f"Latest version saved to: {save_dir / 'rf_model_latest.joblib'}")
+    joblib.dump(preprocessors, save_dir / 'preprocessors_latest.joblib')
+
+    print(f"\nModel, params, and preprocessors saved to: {save_dir}")

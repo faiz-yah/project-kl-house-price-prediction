@@ -1,3 +1,11 @@
 .DS_Store
-model
 __pycache__
+*.pyc
+
+# Raw training data - not needed in repo
+data/
+
+# Timestamped model backups - only commit _latest files
+model/rf_model_2*.joblib
+model/preprocessors_2*.joblib
+model/rf_params_*.joblib

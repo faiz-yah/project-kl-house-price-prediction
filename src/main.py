@@ -7,7 +7,7 @@ from preprocess_train import (
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import r2_score
-from xgboost import XGBRegressor
+#from xgboost import XGBRegressor
 from pathlib import Path
 
 
@@ -24,7 +24,7 @@ def main():
     df = load_data(DATA_PATH)
 
     print("\n[2/4] Preprocessing data...")
-    X_train, X_val, X_test, y_train, y_val, y_test = data_preprocessing(df)
+    X_train, X_val, X_test, y_train, y_val, y_test, preprocessors = data_preprocessing(df)
 
     # ------------------------------------------------------------------
     # FULL PIPELINE: train all 3 models and pick the best automatically
@@ -57,7 +57,7 @@ def main():
     print("\n[4/4] Evaluating model...")
     evaluate_model(best_model, X_train, X_val, X_test, y_train, y_val, y_test)
 
-    save_best_model_with_best_hyperparameter(best_model, params, save_dir=MODEL_DIR)
+    save_best_model_with_best_hyperparameter(best_model, params, preprocessors, save_dir=MODEL_DIR)
 
     print("\n" + "=" * 60)
     print("Pipeline completed successfully!")

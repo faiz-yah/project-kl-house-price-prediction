@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KL House Price Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="/static/style.css?v=8" />
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── LEFT PANEL ───────────────────────────────────────────────────────── -->
+  <aside class="panel-left">
+
+    <div class="panel-header">
+      <div class="brand">
+        <div class="brand-logo">KL</div>
+        <div class="brand-text">
+          <h1>KL Price Estimator</h1>
+          <p>Kuala Lumpur &middot; 2021&ndash;2025</p>
+        </div>
+      </div>
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="estimate">Estimate Price</button>
+        <button class="tab-btn" data-tab="budget">Budget Finder</button>
+      </div>
+    </div>
+
+    <!-- ── TAB: ESTIMATE ──────────────────────────────────────────────────── -->
+    <div class="form-scroll" id="tab-estimate">
+
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">Location</span>
+        </div>
+        <div class="section-body">
+          <div class="field">
+            <label>District</label>
+            <div class="locked-field">
+              Kuala Lumpur
+              <span class="locked-badge">Training data</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="mukim">Mukim</label>
+            <select id="mukim">
+              <option value="">Select mukim...</option>
+              <option>Kuala Lumpur Town Centre</option>
+              <option>Mukim Ampang</option>
+              <option>Mukim Batu</option>
+              <option>Mukim Cheras</option>
+              <option>Mukim Kuala Lumpur</option>
+              <option>Mukim Petaling</option>
+              <option>Mukim Setapak</option>
+              <option>Mukim Ulu Kelang</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">Property Details</span>
+        </div>
+        <div class="section-body">
+          <div class="field">
+            <label>Property Type</label>
+            <div class="type-grid" id="typeGrid">
+              <button class="type-pill" data-value="Condominium/Apartment">Condo / Apt</button>
+              <button class="type-pill" data-value="2 - 2 1/2 Storey Terraced">Terraced 2&ndash;2&frac12;</button>
+              <button class="type-pill" data-value="1 - 1 1/2 Storey Terraced">Terraced 1&ndash;1&frac12;</button>
+              <button class="type-pill" data-value="2 - 2 1/2 Storey Semi-Detached">Semi-D 2&ndash;2&frac12;</button>
+              <button class="type-pill" data-value="1 - 1 1/2 Storey Semi-Detached">Semi-D 1&ndash;1&frac12;</button>
+              <button class="type-pill" data-value="Detached">Detached</button>
+              <button class="type-pill" data-value="Flat">Flat</button>
+              <button class="type-pill" data-value="Town House">Town House</button>
+              <button class="type-pill" data-value="Cluster House">Cluster House</button>
+              <button class="type-pill" data-value="Low-Cost Flat">Low-Cost Flat</button>
+              <button class="type-pill" data-value="Low-Cost House">Low-Cost House</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Tenure</label>
+            <div class="tenure-toggle">
+              <button class="tenure-btn active" data-value="Freehold">Freehold</button>
+              <button class="tenure-btn" data-value="Leasehold">Leasehold</button>
+            </div>
+          </div>
+          <div class="field">
+            <div class="slider-label-row">
+              <label>Land / Parcel Area</label>
+              <span class="slider-val" id="land_area_val">150 sqm</span>
+            </div>
+            <input type="range" id="land_area" min="30" max="800" step="5" value="150" />
+            <div class="slider-bounds"><span>30 sqm</span><span>800 sqm</span></div>
+          </div>
+          <div class="field">
+            <div class="slider-label-row">
+              <label>Unit Level</label>
+              <span class="slider-val" id="unit_level_val">Ground / Landed</span>
+            </div>
+            <input type="range" id="unit_level" min="0" max="50" step="1" value="0" />
+            <div class="slider-bounds"><span>Ground</span><span>Level 50</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">Transaction Year</span>
+          <span class="range-badge">2021 &ndash; 2025</span>
+        </div>
+        <div class="section-body">
+          <div class="field">
+            <div class="slider-label-row">
+              <label>Year</label>
+              <span class="slider-val" id="txn_year_val">2024</span>
+            </div>
+            <input type="range" id="txn_year" min="2021" max="2025" step="1" value="2024" />
+            <div class="slider-bounds"><span>2021</span><span>2025</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-footer">
+        <button class="action-btn" id="predictBtn">
+          <span id="btnText">Estimate Price</span>
+          <span class="spinner hidden" id="btnSpinner"></span>
+        </button>
+      </div>
+
+    </div><!-- /tab-estimate -->
+
+    <!-- ── TAB: BUDGET FINDER ─────────────────────────────────────────────── -->
+    <div class="form-scroll hidden" id="tab-budget">
+
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">Budget Range</span>
+        </div>
+        <div class="section-body">
+          <div class="budget-display" id="budgetDisplay">RM 300k &ndash; RM 700k</div>
+          <div class="field">
+            <div class="slider-label-row">
+              <label>Minimum</label>
+              <span class="slider-val" id="bmin_val">RM 300,000</span>
+            </div>
+            <input type="range" id="budget_min" min="100000" max="3000000" step="25000" value="300000" />
+          </div>
+          <div class="field">
+            <div class="slider-label-row">
+              <label>Maximum</label>
+              <span class="slider-val" id="bmax_val">RM 700,000</span>
+            </div>
+            <input type="range" id="budget_max" min="100000" max="3000000" step="25000" value="700000" />
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">Filters</span>
+          <span class="optional-badge">optional</span>
+        </div>
+        <div class="section-body">
+          <div class="field">
+            <label>Tenure</label>
+            <div class="tenure-toggle">
+              <button class="tenure-btn active" data-value="">Any</button>
+              <button class="tenure-btn" data-value="Freehold">Freehold</button>
+              <button class="tenure-btn" data-value="Leasehold">Leasehold</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="filter_type">Property Type</label>
+            <select id="filter_type">
+              <option value="">Any type</option>
+              <option>Condominium/Apartment</option>
+              <option>Flat</option>
+              <option>Low-Cost Flat</option>
+              <option>1 - 1 1/2 Storey Terraced</option>
+              <option>2 - 2 1/2 Storey Terraced</option>
+              <option>1 - 1 1/2 Storey Semi-Detached</option>
+              <option>2 - 2 1/2 Storey Semi-Detached</option>
+              <option>Cluster House</option>
+              <option>Detached</option>
+              <option>Low-Cost House</option>
+              <option>Town House</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="filter_mukim">Mukim</label>
+            <select id="filter_mukim">
+              <option value="">Any mukim</option>
+              <option>Kuala Lumpur Town Centre</option>
+              <option>Mukim Ampang</option>
+              <option>Mukim Batu</option>
+              <option>Mukim Cheras</option>
+              <option>Mukim Kuala Lumpur</option>
+              <option>Mukim Petaling</option>
+              <option>Mukim Setapak</option>
+              <option>Mukim Ulu Kelang</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="filter_area">Minimum Area</label>
+            <select id="filter_area">
+              <option value="0">Any size</option>
+              <option value="80">At least 80 sqm</option>
+              <option value="120">At least 120 sqm</option>
+              <option value="200">At least 200 sqm</option>
+              <option value="400">At least 400 sqm</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-footer">
+        <button class="action-btn" id="searchBtn">
+          <span id="searchText">Find Properties</span>
+          <span class="spinner hidden" id="searchSpinner"></span>
+        </button>
+      </div>
+
+    </div><!-- /tab-budget -->
+
+  </aside>
+
+  <!-- ── RIGHT PANEL ──────────────────────────────────────────────────────── -->
+  <main class="panel-right">
+    <div id="map"></div>
+
+    <!-- Estimate result -->
+    <div class="result-panel" id="result-estimate">
+      <div>
+        <div class="result-label">Estimated Transaction Price</div>
+        <div class="result-price placeholder" id="resultPrice">Select properties and click Estimate</div>
+        <div class="result-note" id="resultNote"></div>
+      </div>
+    </div>
+
+    <!-- Budget results -->
+    <div class="result-panel budget-results hidden" id="result-budget">
+      <div class="results-header" id="resultsHeader">Enter a budget to find matching properties</div>
+      <div class="results-list" id="resultsList"></div>
+    </div>
+
+  </main>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── Mukim coordinates ─────────────────────────────────────────────────────────
+const MUKIMS = {
+  'Kuala Lumpur Town Centre': { lat: 3.1478, lng: 101.6953, zoom: 14 },
+  'Mukim Ampang':             { lat: 3.1577, lng: 101.7557, zoom: 13 },
+  'Mukim Batu':               { lat: 3.2060, lng: 101.6942, zoom: 13 },
+  'Mukim Cheras':             { lat: 3.0875, lng: 101.7413, zoom: 13 },
+  'Mukim Kuala Lumpur':       { lat: 3.1390, lng: 101.6869, zoom: 13 },
+  'Mukim Petaling':           { lat: 3.1067, lng: 101.6455, zoom: 13 },
+  'Mukim Setapak':            { lat: 3.1940, lng: 101.7040, zoom: 13 },
+  'Mukim Ulu Kelang':         { lat: 3.1892, lng: 101.7613, zoom: 13 },
+};
+
+// ── Map ───────────────────────────────────────────────────────────────────────
+const map = L.map('map', { zoomControl: false }).setView([3.1390, 101.6869], 12);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+  maxZoom: 18,
+}).addTo(map);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+const mukimMarkers = {};
+Object.entries(MUKIMS).forEach(([name, d]) => {
+  mukimMarkers[name] = L.circleMarker([d.lat, d.lng], {
+    radius: 6, fillColor: '#DDDDDD', fillOpacity: 0.8, color: '#BBBBBB', weight: 1.5,
+  }).addTo(map).bindTooltip(name, { direction: 'top' });
+});
+
+let activeMarker = null, pulseLayer = null;
+
+function highlightMukim(name, color = '#FF5A5F') {
+  if (activeMarker) activeMarker.setStyle({ fillColor: '#DDDDDD', color: '#BBBBBB', radius: 6 });
+  if (pulseLayer) { map.removeLayer(pulseLayer); pulseLayer = null; }
+  if (!name || !MUKIMS[name]) return;
+  const d = MUKIMS[name];
+  map.flyTo([d.lat, d.lng], d.zoom, { duration: 1.0 });
+  mukimMarkers[name].setStyle({ fillColor: color, color: '#E04147', radius: 9, fillOpacity: 0.95 });
+  activeMarker = mukimMarkers[name];
+  pulseLayer = L.marker([d.lat, d.lng], {
+    icon: L.divIcon({ className: '', html: '<div class="pulse-ring" style="width:40px;height:40px;"></div>', iconSize: [40,40], iconAnchor: [20,20] }),
+    interactive: false,
+  }).addTo(map);
+}
+
+function resetAllMarkers() {
+  Object.values(mukimMarkers).forEach(m => m.setStyle({ fillColor: '#DDDDDD', color: '#BBBBBB', radius: 6, fillOpacity: 0.8 }));
+  if (pulseLayer) { map.removeLayer(pulseLayer); pulseLayer = null; }
+  activeMarker = null;
+}
+
+function highlightMukimsInResults(mukimSet) {
+  resetAllMarkers();
+  mukimSet.forEach(name => {
+    if (mukimMarkers[name]) {
+      mukimMarkers[name].setStyle({ fillColor: '#FF5A5F', color: '#E04147', radius: 8, fillOpacity: 0.85 });
+    }
+  });
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+let activeTab = 'estimate';
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.getElementById('tab-estimate').classList.toggle('hidden', activeTab !== 'estimate');
+    document.getElementById('tab-budget').classList.toggle('hidden', activeTab !== 'budget');
+    document.getElementById('result-estimate').classList.toggle('hidden', activeTab !== 'estimate');
+    document.getElementById('result-budget').classList.toggle('hidden', activeTab !== 'budget');
+
+    resetAllMarkers();
+    map.setView([3.1390, 101.6869], 12);
+  });
+});
+
+// ── Estimate tab ──────────────────────────────────────────────────────────────
+let selectedType = '', selectedTenure = 'Freehold';
+
+document.getElementById('typeGrid').addEventListener('click', e => {
+  const pill = e.target.closest('.type-pill');
+  if (!pill) return;
+  document.querySelectorAll('.type-pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  selectedType = pill.dataset.value;
+});
+
+document.querySelectorAll('#tab-estimate .tenure-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#tab-estimate .tenure-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedTenure = btn.dataset.value;
+  });
+});
+
+document.getElementById('mukim').addEventListener('change', e => highlightMukim(e.target.value));
+
+function sliderWithLabel(sliderId, labelId, fmt) {
+  const s = document.getElementById(sliderId);
+  const l = document.getElementById(labelId);
+  s.addEventListener('input', () => { l.textContent = fmt(s.value); });
+}
+
+sliderWithLabel('land_area',  'land_area_val',  v => `${v} sqm`);
+sliderWithLabel('unit_level', 'unit_level_val', v => +v === 0 ? 'Ground / Landed' : `Level ${v}`);
+sliderWithLabel('txn_year',   'txn_year_val',   v => v);
+
+document.getElementById('predictBtn').addEventListener('click', async () => {
+  const mukim = document.getElementById('mukim').value;
+  if (!selectedType) { showToast('Please select a property type.'); return; }
+  if (!mukim)        { showToast('Please select a mukim.');         return; }
+
+  const payload = {
+    property_type:     selectedType,
+    district:          'Kuala Lumpur',
+    mukim,
+    scheme_name:       '',
+    road_name:         '',
+    tenure:            selectedTenure,
+    transaction_month: 6,
+    transaction_year:  parseInt(document.getElementById('txn_year').value),
+    land_parcel_area:  parseFloat(document.getElementById('land_area').value),
+    unit_level:        parseInt(document.getElementById('unit_level').value),
+  };
+
+  setLoading('predictBtn', 'btnText', 'btnSpinner', true);
+  const price = document.getElementById('resultPrice');
+  price.textContent = 'Calculating...';
+  price.className = 'result-price loading';
+
+  try {
+    const res  = await fetch('/predict', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.error) {
+      price.textContent = 'Error — try again';
+      price.className = 'result-price placeholder';
+      showToast(data.error);
+    } else {
+      price.textContent = data.formatted;
+      price.className = 'result-price';
+      document.getElementById('resultNote').textContent = `${selectedType} · ${mukim} · ${selectedTenure}`;
+    }
+  } catch { showToast('Connection error.'); price.className = 'result-price placeholder'; }
+  finally   { setLoading('predictBtn', 'btnText', 'btnSpinner', false); }
+});
+
+// ── Budget tab ────────────────────────────────────────────────────────────────
+let budgetTenure = '';
+
+document.querySelectorAll('#tab-budget .tenure-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#tab-budget .tenure-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    budgetTenure = btn.dataset.value;
+  });
+});
+
+function fmtRM(val) {
+  val = parseInt(val);
+  if (val >= 1000000) return `RM ${(val/1000000).toFixed(1)}M`;
+  return `RM ${(val/1000).toFixed(0)}k`;
+}
+function fmtRMFull(val) {
+  return 'RM ' + parseInt(val).toLocaleString();
+}
+
+function updateBudgetDisplay() {
+  const mn = document.getElementById('budget_min').value;
+  const mx = document.getElementById('budget_max').value;
+  document.getElementById('bmin_val').textContent = fmtRMFull(mn);
+  document.getElementById('bmax_val').textContent = fmtRMFull(mx);
+  document.getElementById('budgetDisplay').textContent = `${fmtRM(mn)} – ${fmtRM(mx)}`;
+}
+
+document.getElementById('budget_min').addEventListener('input', () => {
+  const mn = parseInt(document.getElementById('budget_min').value);
+  const mx = parseInt(document.getElementById('budget_max').value);
+  if (mn > mx) document.getElementById('budget_max').value = mn;
+  updateBudgetDisplay();
+});
+document.getElementById('budget_max').addEventListener('input', () => {
+  const mn = parseInt(document.getElementById('budget_min').value);
+  const mx = parseInt(document.getElementById('budget_max').value);
+  if (mx < mn) document.getElementById('budget_min').value = mx;
+  updateBudgetDisplay();
+});
+
+const HIGH_RISE_SET = new Set(['Condominium/Apartment', 'Flat', 'Low-Cost Flat']);
+
+document.getElementById('searchBtn').addEventListener('click', async () => {
+  const payload = {
+    budget_min:    parseInt(document.getElementById('budget_min').value),
+    budget_max:    parseInt(document.getElementById('budget_max').value),
+    tenure:        budgetTenure,
+    property_type: document.getElementById('filter_type').value,
+    mukim:         document.getElementById('filter_mukim').value,
+    min_area:      parseFloat(document.getElementById('filter_area').value),
+  };
+
+  setLoading('searchBtn', 'searchText', 'searchSpinner', true);
+  document.getElementById('resultsHeader').textContent = 'Searching...';
+  document.getElementById('resultsList').innerHTML = '';
+
+  try {
+    const res  = await fetch('/search', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const data = await res.json();
+    renderResults(data.results, data.count, payload.budget_min, payload.budget_max);
+  } catch { showToast('Connection error.'); document.getElementById('resultsHeader').textContent = 'Error — try again'; }
+  finally   { setLoading('searchBtn', 'searchText', 'searchSpinner', false); }
+});
+
+function renderResults(results, count, bmin, bmax) {
+  const header = document.getElementById('resultsHeader');
+  const list   = document.getElementById('resultsList');
+
+  if (!results.length) {
+    header.textContent = 'No properties found in this range.';
+    list.innerHTML = '';
+    resetAllMarkers();
+    return;
+  }
+
+  header.textContent = `${count} propert${count === 1 ? 'y' : 'ies'} found · showing ${results.length}`;
+  list.innerHTML = '';
+
+  const mukimSet = new Set(results.map(r => r.mukim));
+  highlightMukimsInResults(mukimSet);
+
+  if (mukimSet.size === 1) {
+    const only = [...mukimSet][0];
+    if (MUKIMS[only]) map.flyTo([MUKIMS[only].lat, MUKIMS[only].lng], MUKIMS[only].zoom, { duration: 1.0 });
+  } else {
+    map.setView([3.1390, 101.6869], 12);
+  }
+
+  results.forEach(r => {
+    const group = HIGH_RISE_SET.has(r.property_type) ? 'High-Rise' : 'Landed';
+    const meta  = [r.mukim, r.tenure, `${r.land_parcel_area} sqm`, r.unit_level > 0 ? `Floor ${r.unit_level}` : null]
+                    .filter(Boolean).join(' &middot; ');
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    card.innerHTML = `
+      <div class="result-card-body">
+        <div class="result-card-title">${r.property_type}</div>
+        <div class="result-card-meta">${meta}</div>
+      </div>
+      <div class="result-card-right">
+        <span class="group-badge ${group === 'High-Rise' ? 'badge-rise' : 'badge-land'}">${group}</span>
+        <div class="result-card-price">${r.formatted_price}</div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function setLoading(btnId, textId, spinnerId, on) {
+  document.getElementById(btnId).disabled = on;
+  document.getElementById(textId).classList.toggle('hidden', on);
+  document.getElementById(spinnerId).classList.toggle('hidden', !on);
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+</script>
+</body>
+</html>

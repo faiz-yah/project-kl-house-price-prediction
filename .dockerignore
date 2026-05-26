@@ -1,0 +1,18 @@
+# .dockerignore works like .gitignore but for the Docker build context.
+# Files listed here are never sent to the Docker daemon — keeps the build
+# context small and prevents secrets/junk from leaking into the image.
+
+.git
+.DS_Store
+__pycache__
+*.pyc
+*.pyo
+
+# Training code — not needed at inference time
+src/
+data/
+
+# Timestamped model backups — only _latest files are COPY'd in Dockerfile
+model/rf_model_2*.joblib
+model/preprocessors_2*.joblib
+model/rf_params_*.joblib
